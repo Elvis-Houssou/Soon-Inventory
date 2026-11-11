@@ -4,6 +4,7 @@ import { FileText, Home, Package, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { useOnline, usePwa } from "@/lib/pwa";
 import { ThemeToggle } from "./ThemeToggle";
 
 const NAV = [
@@ -15,6 +16,8 @@ const NAV = [
 
 export function AppShell({ title, wizard, children }: { title: string; wizard?: boolean; children: ReactNode }) {
   const path = usePathname();
+  usePwa();
+  const online = useOnline();
   const current = wizard ? "/" : path;
   return (
     <div className={wizard ? "app wiz" : "app"}>
@@ -32,10 +35,9 @@ export function AppShell({ title, wizard, children }: { title: string; wizard?: 
       <main>
         <header className="top">
           <h1>{title}</h1>
-          {/* Plan 1 : pas encore de serveur, tout vit sur l'appareil. */}
-          <span className="pill sync" role="status">
+          <span className={online ? "pill sync" : "pill sync off"} role="status">
             <span className="dot" />
-            Enregistré sur cet appareil
+            {online ? "Enregistré sur cet appareil" : "Hors ligne · enregistré sur cet appareil"}
           </span>
           <ThemeToggle />
         </header>

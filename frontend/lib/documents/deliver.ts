@@ -5,12 +5,8 @@ const XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 // Les deux librairies sont lourdes : elles ne sont chargées qu'au moment de l'export.
 export async function documentBlob(record: DocumentRecord<DocData>): Promise<Blob> {
-  if (record.format === "pdf") {
-    const { buildPdf } = await import("./pdf");
-    return buildPdf(record.data).output("blob");
-  }
-  const { buildWorkbook } = await import("./excel");
-  return new Blob([await buildWorkbook(record.data).xlsx.writeBuffer()], { type: XLSX });
+  if (record.format === "pdf") return (await import("./pdf")).buildPdf(record.data).output("blob");
+  return new Blob([await (await import("./excel")).buildWorkbook(record.data).xlsx.writeBuffer()], { type: XLSX });
 }
 
 /** Sur téléphone : feuille de partage (WhatsApp, e-mail…). Ailleurs, ou si le partage est refusé : téléchargement. */

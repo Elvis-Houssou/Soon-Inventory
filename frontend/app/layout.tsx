@@ -9,9 +9,11 @@ const inter = Inter({ variable: "--font-inter", subsets: ["latin"], weight: ["40
 export const metadata: Metadata = {
   title: "Soon Inventory",
   description: "Créez vos fiches d'inventaire d'expédition en quelques étapes.",
+  appleWebApp: { capable: true, title: "Soon Inventory" },
+  icons: { apple: "/icon-192.png" },
 };
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#F47B20" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

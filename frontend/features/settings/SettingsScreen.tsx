@@ -1,11 +1,12 @@
 "use client";
 
 import { useLiveQuery } from "dexie-react-hooks";
-import { Check, Plus, TriangleAlert, X } from "lucide-react";
+import { Check, Download, Plus, TriangleAlert, X } from "lucide-react";
 import { useState } from "react";
 import { THEME_CHOICES, useThemeMode } from "@/components/layout/ThemeToggle";
 import { db } from "@/lib/db/db";
 import { deleteDestination, listDestinations, saveDestination } from "@/lib/db/repo";
+import { useInstall } from "@/lib/pwa";
 import { setThemeMode } from "@/lib/theme";
 
 export async function addDestination(name: string): Promise<string | undefined> {
@@ -23,6 +24,7 @@ export function SettingsScreen() {
   const destinations = useLiveQuery(() => listDestinations(), []);
   const pending = useLiveQuery(() => db.outbox.count(), []);
   const [name, setName] = useState("");
+  const install = useInstall();
 
   return (
     <div className="setg">
@@ -86,6 +88,11 @@ export function SettingsScreen() {
           <TriangleAlert className="i" aria-hidden />
           <span>Tant que la sauvegarde sur le serveur n&apos;est pas activée, vos fiches n&apos;existent que sur cet appareil. S&apos;il est perdu, elles le sont aussi.</span>
         </p>
+        {install && (
+          <button type="button" className="btn dark" style={{ marginTop: 16 }} onClick={install}>
+            <Download className="i" aria-hidden /> Installer l&apos;application
+          </button>
+        )}
       </section>
     </div>
   );

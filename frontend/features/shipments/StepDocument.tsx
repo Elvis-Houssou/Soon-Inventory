@@ -1,7 +1,7 @@
 "use client";
 
 import { useLiveQuery } from "dexie-react-hooks";
-import { Download, FileSpreadsheet, FileText, Printer } from "lucide-react";
+import { Download, FileSpreadsheet, FileText, Printer, TriangleAlert } from "lucide-react";
 import { useState } from "react";
 import { listDestinations, listDocuments, saveDocumentVersion } from "@/lib/db/repo";
 import { deliver, documentBlob } from "@/lib/documents/deliver";
@@ -60,6 +60,7 @@ export function StepDocument({ shipment: s }: StepProps) {
   /** Index du conteneur, ou "all" pour le document global. */
   const [scope, setScope] = useState<number | "all">(0);
   const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   const destName = destinations?.find((d) => d.id === s.destinationId)?.name ?? "";
   const container = scope === "all" ? undefined : (s.containers[scope] ?? s.containers[0]);
@@ -77,8 +78,11 @@ export function StepDocument({ shipment: s }: StepProps) {
 
   async function send(record: DocumentRecord<DocData>) {
     setBusy(true);
+    setFailed(false);
     try {
       await deliver(await documentBlob(record), fileName(record));
+    } catch {
+      setFailed(true);
     } finally {
       setBusy(false);
     }
@@ -113,6 +117,13 @@ export function StepDocument({ shipment: s }: StepProps) {
           <Printer className="i" aria-hidden /> Imprimer
         </button>
       </div>
+
+      {failed && (
+        <p className="warn" role="alert" style={{ margin: "0 0 18px" }}>
+          <TriangleAlert className="i" aria-hidden />
+          <span>Le fichier n&apos;a pas pu être créé. Connectez-vous à Internet une fois, puis réessayez.</span>
+        </p>
+      )}
 
       <div className="docwrap">
         {data.sheets.map((sheet, i) => (
