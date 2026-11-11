@@ -1,0 +1,22 @@
+# Déploiement du serveur sur Render (Blueprint). Voir docs/deploiement.md.
+services:
+  - type: web
+    name: soon-inventory-api
+    runtime: python
+    plan: free
+    region: virginia # même région que la base Neon (us-east-1)
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    # Les migrations sont appliquées à chaque démarrage, puis le serveur écoute sur le port fourni par Render.
+    startCommand: alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.5
+      - key: DATABASE_URL
+        sync: false # à coller dans Render à la création, jamais dans le dépôt
+      - key: SECRET_KEY
+        generateValue: true
+      - key: COOKIE_SECURE
+        value: "true"

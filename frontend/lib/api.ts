@@ -1,6 +1,7 @@
 import type { SyncApi } from "./sync/engine";
 
-const BASE = `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}/api/v1`;
+// Même domaine que l'application : next.config.ts relaie /api vers le serveur.
+const BASE = "/api/v1";
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
