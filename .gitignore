@@ -1,0 +1,11 @@
+node_modules/
+.next/
+.env
+.env.*
+!.env.example
+__pycache__/
+.venv/
+*.pyc
+.impeccable/
+# Images de référence de tiers : gardées en local, non publiées
+Soon_inventory_*_interface.jpg
