@@ -6,11 +6,11 @@ const PAGES = `si-pages-${VERSION}`;
 const ASSETS = `si-assets-${VERSION}`;
 const ROUTES = ["/", "/expeditions", "/expedition", "/produits", "/parametres"];
 
-/** Met en cache les cinq pages et tous les fichiers du build (liste écrite par scripts/precache-manifest.mjs). */
+/** Met en cache les cinq pages et tous les fichiers du build (liste servie par app/precache.json). */
 async function warm() {
   const pages = await caches.open(PAGES);
   const assets = await caches.open(ASSETS);
-  const files = await fetch("/_next/static/precache.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : []));
+  const files = await fetch("/precache.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : []));
   await Promise.all([
     ...ROUTES.map(async (route) => {
       const res = await fetch(route, { cache: "no-store" });

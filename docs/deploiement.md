@@ -38,4 +38,5 @@ Les autres réglages sont déjà dans `render.yaml` : la clé secrète est gén�
 
 - **Offre gratuite de Render** : le serveur s'endort après 15 minutes sans visite. La première synchronisation suivante peut prendre près d'une minute ; l'application reste utilisable pendant ce temps, les fiches sont sur l'appareil.
 - **Si l'adresse Render change**, modifiez `API_ORIGIN` dans Vercel puis relancez un déploiement : la valeur est lue au moment du build.
+- **Cache hors ligne** : la liste des fichiers est produite pendant le build (`/precache.json`).
 - **L'application appelle `/api/...` sur son propre domaine**, et Vercel relaie vers Render. Il n'y a donc rien à régler côté CORS.
