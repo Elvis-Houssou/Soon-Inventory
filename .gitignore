@@ -9,3 +9,4 @@ __pycache__/
 .impeccable/
 # Images de référence de tiers : gardées en local, non publiées
 Soon_inventory_*_interface.jpg
+.pytest_cache/
