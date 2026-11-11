@@ -2,6 +2,7 @@
 
 import { Copy, Plus, Trash2 } from "lucide-react";
 import { addContainer, duplicateContainer, removeContainer, updateContainer } from "@/lib/domain/shipment";
+import { AnimatedNumber } from "@/components/motion/AnimatedNumber";
 import { containerTotals, formatInt, formatKg } from "@/lib/domain/weights";
 import { DateWarning } from "./StepGeneral";
 import type { StepProps } from "./Wizard";
@@ -66,10 +67,10 @@ export function StepContainers({ shipment: s, update }: StepProps) {
               )}
               <div className="cont-f">
                 <span>
-                  <span className="num">{formatInt(t.cartons)}</span>cartons
+                  <AnimatedNumber value={t.cartons} format={formatInt} />cartons
                 </span>
                 <span>
-                  <span className="num">{formatKg(t.weightG)}</span>kg
+                  <AnimatedNumber value={t.weightG} format={formatKg} step={1000} />kg
                 </span>
               </div>
             </article>

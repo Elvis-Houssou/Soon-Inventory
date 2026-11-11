@@ -216,3 +216,8 @@ main{padding:26px 34px 120px 6px;max-width:1500px;width:100%}
   .app{display:block}main{padding:0;max-width:none}.sheet{box-shadow:none;break-after:page;width:100%;border-radius:0}}
 .sync.off .dot{background:var(--orange)}
 .warn.conflict{margin:0 0 18px}
+.v3d{height:300px;display:grid;align-items:center;overflow:hidden}
+.v3d canvas{display:block;touch-action:pan-y;cursor:grab}
+.bar2d{display:flex;height:84px;border-radius:14px;overflow:hidden;border:2px solid var(--ink)}
+.leg{list-style:none;margin:12px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px 26px}
+.leg li{display:flex;gap:10px;align-items:center}.leg i{width:14px;height:14px;border-radius:4px;flex:none}.leg li>span:first-of-type{flex:1}

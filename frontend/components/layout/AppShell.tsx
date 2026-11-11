@@ -1,6 +1,7 @@
 "use client";
 
 import { FileText, Home, Package, SlidersHorizontal } from "lucide-react";
+import { MotionConfig } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
@@ -38,7 +39,7 @@ export function AppShell({ title, wizard, children }: { title: string; wizard?: 
           <SyncIndicator />
           <ThemeToggle />
         </header>
-        {children}
+        <MotionConfig reducedMotion="user">{children}</MotionConfig>
       </main>
     </div>
   );

@@ -2,10 +2,12 @@
 
 import { useLiveQuery } from "dexie-react-hooks";
 import { ArrowLeft, ArrowRight, Check, TriangleAlert } from "lucide-react";
+import { motion } from "motion/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
+import { AnimatedNumber } from "@/components/motion/AnimatedNumber";
 import { getShipment, saveShipment } from "@/lib/db/repo";
 import { newShipment } from "@/lib/domain/shipment";
 import type { Shipment } from "@/lib/domain/types";
@@ -22,11 +24,16 @@ const STEPS = ["Destination et dates", "Conteneurs", "Marchandises", "Vérificat
 export type StepProps = { shipment: Shipment; update: (next: Shipment) => void };
 
 /** Le brouillon vit en mémoire pour la saisie, et chaque modification est écrite aussitôt dans Dexie. */
-function useShipmentDraft(id: string | null) {
+function useShipmentDraft(id: string | null, isNew: boolean) {
   const [shipment, setShipment] = useState<Shipment | null | undefined>(undefined);
   const load = useCallback(() => {
-    if (id) void getShipment(id).then((s) => setShipment(s && !s.deletedAt ? s : null));
-  }, [id]);
+    if (!id) return;
+    void getShipment(id).then((s) => {
+      if (s && !s.deletedAt) setShipment(s);
+      // Nouvelle expédition pas encore enregistrée : elle n'existe qu'à l'écran jusqu'à la première saisie.
+      else setShipment(isNew && !s ? { ...newShipment(), id } : null);
+    });
+  }, [id, isNew]);
   useEffect(() => {
     load();
     // La synchronisation a remplacé cette fiche par une version venue d'ailleurs : on recharge.
@@ -68,17 +75,14 @@ export function Wizard() {
   const router = useRouter();
   const id = params.get("id");
   const step = Math.min(STEPS.length, Math.max(1, Number(params.get("etape")) || 1));
-  const { shipment, update } = useShipmentDraft(id);
+  const { shipment, update } = useShipmentDraft(id, params.has("nouveau"));
   const [current, setCurrent] = useState(0);
 
-  // Sans identifiant : on crée l'expédition une seule fois (le mode strict de React rejoue les effets).
-  const created = useRef(false);
+  // Sans identifiant : on en choisit un, sans rien enregistrer. Ouvrir puis quitter ne laisse aucun brouillon vide.
   useEffect(() => {
-    if (id || created.current) return;
-    created.current = true;
-    const s = newShipment();
-    saveShipment(s).then(() => router.replace(`/expedition?id=${s.id}`));
+    if (!id) router.replace(`/expedition?id=${crypto.randomUUID()}&nouveau=1`);
   }, [id, router]);
+  const [direction, setDirection] = useState(1);
 
   if (shipment === null)
     return (
@@ -93,7 +97,10 @@ export function Wizard() {
     );
   if (!shipment) return <AppShell title="Nouvelle expédition" wizard>{null}</AppShell>;
 
-  const go = (n: number) => router.replace(`/expedition?id=${shipment.id}&etape=${n}`);
+  const go = (n: number) => {
+    setDirection(n >= step ? 1 : -1);
+    router.replace(`/expedition?id=${shipment.id}&etape=${n}`);
+  };
   const totals = shipmentTotals(shipment);
   const props: StepProps = { shipment, update };
   const active = Math.min(current, shipment.containers.length - 1);
@@ -113,21 +120,22 @@ export function Wizard() {
 
       <ConflictBanner id={shipment.id} />
 
-      <section className="stage">
+      {/* Motion anime l'arrivée de l'étape ; les chiffres sont animés par GSAP, jamais le même élément. */}
+      <motion.section key={step} className="stage" initial={{ opacity: 0, x: 28 * direction }} animate={{ opacity: 1, x: 0 }} transition={{ type: "spring", stiffness: 380, damping: 34 }}>
         {step === 1 && <StepGeneral {...props} />}
         {step === 2 && <StepContainers {...props} />}
         {step === 3 && <StepGoods {...props} current={active} setCurrent={setCurrent} />}
-        {step === 4 && <StepReview {...props} />}
+        {step === 4 && <StepReview {...props} current={active} setCurrent={setCurrent} />}
         {step === 5 && <StepDocument {...props} />}
-      </section>
+      </motion.section>
 
       <div className="bar">
         <div className="tot" role="status">
           <span>
-            <span className="num">{formatInt(totals.cartons)}</span>cartons
+            <AnimatedNumber value={totals.cartons} format={formatInt} />cartons
           </span>
           <span>
-            <span className="num">{formatKg(totals.weightG)}</span>kg
+            <AnimatedNumber value={totals.weightG} format={formatKg} step={1000} />kg
           </span>
         </div>
         {step > 1 ? (

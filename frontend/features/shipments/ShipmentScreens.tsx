@@ -142,7 +142,11 @@ export function HistoryScreen() {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<Shipment["status"] | "">("");
   const [dest, setDest] = useState("");
-  const shown = shipments?.filter((s) => matches(s, destName(s), query) && (!status || s.status === status) && (!dest || s.destinationId === dest));
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const shown = shipments?.filter((s) => matches(s, destName(s), query) && (!status || s.status === status) && (!dest || s.destinationId === dest) &&
+    // Dates au format AAAA-MM-JJ : la comparaison de texte suit le calendrier.
+    (!from || (!!s.depotDate && s.depotDate >= from)) && (!to || (!!s.depotDate && s.depotDate <= to)));
   const chip = (label: string, on: boolean, click: () => void) => (
     <button key={label} type="button" className="chip sm" aria-pressed={on} onClick={click}>
       {label}
@@ -163,6 +167,16 @@ export function HistoryScreen() {
         {!!destinations?.length && <span className="sep" />}
         {!!destinations?.length && chip("Toutes les destinations", dest === "", () => setDest(""))}
         {destinations?.map((d) => chip(d.name, dest === d.id, () => setDest(d.id)))}
+      </div>
+      <div className="g2" style={{ maxWidth: 440, marginBottom: 16 }}>
+        <label className="field">
+          Déposées à partir du
+          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+        </label>
+        <label className="field">
+          Jusqu&apos;au
+          <input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+        </label>
       </div>
       {shipments?.length === 0 && <p className="empty">Aucune expédition pour l&apos;instant. Créez la première depuis l&apos;accueil.</p>}
       {!!shipments?.length && shown?.length === 0 && <p className="empty">Aucune expédition ne correspond à ces filtres.</p>}

@@ -2,8 +2,10 @@
 
 import { useLiveQuery } from "dexie-react-hooks";
 import { Check, Plus, Search, Trash2 } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { AnimatedNumber } from "@/components/motion/AnimatedNumber";
 import { listProducts } from "@/lib/db/repo";
 import { addItem, removeItem, setQuantity } from "@/lib/domain/shipment";
 import type { Product, Shipment } from "@/lib/domain/types";
@@ -89,10 +91,11 @@ export function StepGoods({ shipment: s, update, current, setCurrent }: StepProp
         <div className="panel" ref={list}>
           <h3 style={{ marginBottom: 8 }}>Dans le conteneur {current + 1}</h3>
           {c.items.length === 0 && <p className="empty">Ce conteneur est vide. Choisissez un premier produit dans la liste.</p>}
+          <AnimatePresence initial={false}>
           {c.items.map((it) => {
             const setQty = (q: number) => update(setQuantity(s, c.id, it.id, q));
             return (
-              <div className="line" key={it.id}>
+              <motion.div className="line" key={it.id} initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0, paddingTop: 0, paddingBottom: 0 }} transition={{ duration: 0.22 }} style={{ overflow: "hidden" }}>
                 <span className="d">{it.designation}</span>
                 <span className="qty">
                   <button type="button" aria-label="Retirer un carton" onClick={() => setQty(it.quantityCartons - 1)}>
@@ -110,14 +113,15 @@ export function StepGoods({ shipment: s, update, current, setCurrent }: StepProp
                   </button>
                 </span>
                 <span className="w">
-                  <span className="num">{formatKg(lineWeightG(it))}</span> kg
+                  <AnimatedNumber value={lineWeightG(it)} format={formatKg} step={1000} /> kg
                 </span>
                 <button type="button" className="icon-btn del" aria-label={`Enlever ${it.designation}`} onClick={() => update(removeItem(s, c.id, it.id))}>
                   <Trash2 className="i" aria-hidden />
                 </button>
-              </div>
+              </motion.div>
             );
           })}
+          </AnimatePresence>
         </div>
       </div>
     </>

@@ -1,7 +1,7 @@
 // Service worker de Soon Inventory : rend l'application ouvrable sans réseau.
 // Les données métier ne passent pas par ici : elles vivent dans IndexedDB (Dexie).
 
-const VERSION = "v1"; // shortcut: les anciens fichiers ne sont purgés qu'en changeant ce numéro
+const VERSION = "v1";
 const PAGES = `si-pages-${VERSION}`;
 const ASSETS = `si-assets-${VERSION}`;
 const ROUTES = ["/", "/expeditions", "/expedition", "/produits", "/parametres"];
@@ -22,6 +22,14 @@ async function warm() {
       if (res.ok) await assets.put(path, res);
     }),
   ]);
+  // Fichiers d'anciens builds : on ne les retire qu'avec une liste en main, jamais hors ligne.
+  if (files.length) {
+    const wanted = new Set(files);
+    for (const req of await assets.keys()) {
+      const path = new URL(req.url).pathname;
+      if (path.startsWith("/_next/static/") && !wanted.has(path)) await assets.delete(req);
+    }
+  }
 }
 
 self.addEventListener("install", (event) => {

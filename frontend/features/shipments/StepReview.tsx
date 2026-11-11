@@ -3,10 +3,13 @@
 import { Check, TriangleAlert } from "lucide-react";
 import { validateShipment } from "@/lib/domain/shipment";
 import { containerTotals, formatInt, formatKg, shipmentTotals } from "@/lib/domain/weights";
+import { AnimatedNumber } from "@/components/motion/AnimatedNumber";
+import { ContainerSplit } from "./ContainerSplit";
 import { issueText } from "./issueText";
+import { ContainerTabs } from "./StepGoods";
 import type { StepProps } from "./Wizard";
 
-export function StepReview({ shipment: s }: StepProps) {
+export function StepReview({ shipment: s, current, setCurrent }: StepProps & { current: number; setCurrent: (i: number) => void }) {
   const issues = validateShipment(s);
   const total = shipmentTotals(s);
   return (
@@ -54,11 +57,16 @@ export function StepReview({ shipment: s }: StepProps) {
         <div className="rc t">
           <b>Total de l&apos;expédition</b>
           <span />
-          <span className="num">{formatInt(total.cartons)}</span>
+          <AnimatedNumber value={total.cartons} format={formatInt} />
           <span>
-            <span className="num">{formatKg(total.weightG)}</span> kg
+            <AnimatedNumber value={total.weightG} format={formatKg} step={1000} /> kg
           </span>
         </div>
+      </div>
+      <div className="panel" style={{ marginTop: 10 }}>
+        <h3 style={{ marginBottom: 12 }}>Répartition du conteneur</h3>
+        <ContainerTabs shipment={s} current={current} setCurrent={setCurrent} />
+        <ContainerSplit container={s.containers[current]} />
       </div>
     </>
   );
