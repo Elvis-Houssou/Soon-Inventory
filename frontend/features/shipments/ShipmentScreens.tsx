@@ -55,7 +55,7 @@ function Rows({ items, destName, resume }: { items: Shipment[]; destName: (s: Sh
             <span className="num">{s.containers.length}</span>
             <span className="num">{formatInt(t.cartons)}</span>
             <span className="num">{formatKg(t.weightG)} kg</span>
-            <span className={STATUS[s.status][1]}>{STATUS[s.status][0]}</span>
+            {s.syncState === "conflict" ? <span className="tag draft">À vérifier</span> : <span className={STATUS[s.status][1]}>{STATUS[s.status][0]}</span>}
             <span style={{ display: "flex", gap: 6 }}>
               <Link className="icon-btn" href={`/expedition?id=${s.id}`} aria-label={`Ouvrir ${label}`} title="Ouvrir">
                 <Pencil className="i" aria-hidden />

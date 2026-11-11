@@ -10,10 +10,14 @@ async function write(name: TableName, entityType: OutboxEntry["entityType"], ent
   const now = new Date().toISOString();
   const table = db.table<Entity, string>(name);
   await db.transaction("rw", table, db.outbox, async () => {
-    await table.put({ ...entity, updatedAt: now, syncState: "pending" });
+    // La version appartient au serveur : un écran qui enregistre une copie ancienne ne doit pas la faire reculer.
+    const version = (await table.get(entity.id))?.version ?? entity.version;
+    await table.put({ ...entity, version, updatedAt: now, syncState: "pending" });
     await db.outbox.where("[entityType+entityId]").equals([entityType, entity.id]).delete();
     await db.outbox.add({ id: crypto.randomUUID(), entityType, entityId: entity.id, op, createdAt: now, attempts: 0 });
   });
+  // Réveille la synchronisation (voir lib/sync/manager.ts).
+  if (typeof window !== "undefined") window.dispatchEvent(new Event("si-local-change"));
 }
 
 async function softDelete(name: TableName, entityType: OutboxEntry["entityType"], id: string) {

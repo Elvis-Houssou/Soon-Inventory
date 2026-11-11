@@ -1,12 +1,12 @@
 "use client";
 
 import { useLiveQuery } from "dexie-react-hooks";
-import { Check, Download, Plus, TriangleAlert, X } from "lucide-react";
+import { Download, Plus, TriangleAlert, X } from "lucide-react";
 import { useState } from "react";
 import { THEME_CHOICES, useThemeMode } from "@/components/layout/ThemeToggle";
-import { db } from "@/lib/db/db";
 import { deleteDestination, listDestinations, saveDestination } from "@/lib/db/repo";
 import { useInstall } from "@/lib/pwa";
+import { AccountPanel } from "./AccountPanel";
 import { setThemeMode } from "@/lib/theme";
 
 export async function addDestination(name: string): Promise<string | undefined> {
@@ -22,7 +22,6 @@ export async function addDestination(name: string): Promise<string | undefined> 
 export function SettingsScreen() {
   const mode = useThemeMode();
   const destinations = useLiveQuery(() => listDestinations(), []);
-  const pending = useLiveQuery(() => db.outbox.count(), []);
   const [name, setName] = useState("");
   const install = useInstall();
 
@@ -70,23 +69,13 @@ export function SettingsScreen() {
         </form>
       </section>
 
+      <AccountPanel />
+
       <section className="panel">
         <h2>Données de cet appareil</h2>
-        <div className="saved" style={{ margin: "0 0 14px" }}>
-          <span className="ok">
-            <Check className="i" aria-hidden />
-          </span>
-          <p>
-            Tout est enregistré sur cet appareil.
-            <br />
-            <span className="muted">
-              {pending ? `${pending} modification${pending > 1 ? "s" : ""} en attente d'envoi. ` : ""}La sauvegarde sur le serveur n&apos;est pas encore activée.
-            </span>
-          </p>
-        </div>
         <p className="warn" style={{ margin: 0 }}>
           <TriangleAlert className="i" aria-hidden />
-          <span>Tant que la sauvegarde sur le serveur n&apos;est pas activée, vos fiches n&apos;existent que sur cet appareil. S&apos;il est perdu, elles le sont aussi.</span>
+          <span>Sans compte, vos fiches n&apos;existent que sur cet appareil. S&apos;il est perdu avant un envoi au serveur, les dernières fiches le sont aussi.</span>
         </p>
         {install && (
           <button type="button" className="btn dark" style={{ marginTop: 16 }} onClick={install}>

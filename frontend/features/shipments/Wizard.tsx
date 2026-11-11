@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { useLiveQuery } from "dexie-react-hooks";
+import { ArrowLeft, ArrowRight, Check, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -9,6 +10,7 @@ import { getShipment, saveShipment } from "@/lib/db/repo";
 import { newShipment } from "@/lib/domain/shipment";
 import type { Shipment } from "@/lib/domain/types";
 import { formatInt, formatKg, shipmentTotals } from "@/lib/domain/weights";
+import { keepMine, takeServer } from "@/lib/sync/engine";
 import { StepContainers } from "./StepContainers";
 import { StepDocument } from "./StepDocument";
 import { StepGeneral } from "./StepGeneral";
@@ -22,14 +24,43 @@ export type StepProps = { shipment: Shipment; update: (next: Shipment) => void }
 /** Le brouillon vit en mémoire pour la saisie, et chaque modification est écrite aussitôt dans Dexie. */
 function useShipmentDraft(id: string | null) {
   const [shipment, setShipment] = useState<Shipment | null | undefined>(undefined);
-  useEffect(() => {
-    if (id) getShipment(id).then((s) => setShipment(s && !s.deletedAt ? s : null));
+  const load = useCallback(() => {
+    if (id) void getShipment(id).then((s) => setShipment(s && !s.deletedAt ? s : null));
   }, [id]);
+  useEffect(() => {
+    load();
+    // La synchronisation a remplacé cette fiche par une version venue d'ailleurs : on recharge.
+    const onRemote = (e: Event) => (e as CustomEvent<string>).detail === id && load();
+    addEventListener("si-remote-change", onRemote);
+    return () => removeEventListener("si-remote-change", onRemote);
+  }, [id, load]);
   const update = useCallback((next: Shipment) => {
     setShipment(next);
     void saveShipment(next);
   }, []);
   return { shipment, update };
+}
+
+/** Deux appareils ont modifié la même fiche : l'utilisateur choisit, rien n'est écrasé sans lui. */
+function ConflictBanner({ id }: { id: string }) {
+  const inConflict = useLiveQuery(async () => (await getShipment(id))?.syncState === "conflict", [id]);
+  if (!inConflict) return null;
+  return (
+    <div className="warn conflict" role="alert">
+      <TriangleAlert className="i" aria-hidden />
+      <div>
+        <p>Cette expédition a aussi été modifiée sur un autre appareil. Laquelle voulez-vous garder ?</p>
+        <div className="addrow" style={{ marginTop: 12 }}>
+          <button type="button" className="btn dark" onClick={() => void keepMine(id)}>
+            Garder celle de cet appareil
+          </button>
+          <button type="button" className="btn ghost" onClick={() => void takeServer(id)}>
+            Prendre celle de l&apos;autre appareil
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function Wizard() {
@@ -79,6 +110,8 @@ export function Wizard() {
           </li>
         ))}
       </ol>
+
+      <ConflictBanner id={shipment.id} />
 
       <section className="stage">
         {step === 1 && <StepGeneral {...props} />}
