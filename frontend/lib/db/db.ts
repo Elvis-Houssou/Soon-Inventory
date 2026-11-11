@@ -1,11 +1,13 @@
 import Dexie, { type EntityTable } from "dexie";
-import type { Destination, OutboxEntry, Product, Shipment } from "../domain/types";
+import type { DocData } from "../documents/model";
+import type { Destination, DocumentRecord, OutboxEntry, Product, Shipment } from "../domain/types";
 
 // Schéma : docs/schema-donnees.md §3. Les booléens ne sont pas indexables dans IndexedDB : isActive se filtre en mémoire.
 class SoonInventory extends Dexie {
   shipments!: EntityTable<Shipment, "id">;
   products!: EntityTable<Product, "id">;
   destinations!: EntityTable<Destination, "id">;
+  documents!: EntityTable<DocumentRecord<DocData>, "id">;
   outbox!: EntityTable<OutboxEntry, "id">;
   meta!: EntityTable<{ key: string; value: unknown }, "key">;
 

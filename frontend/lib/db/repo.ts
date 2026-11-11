@@ -1,4 +1,5 @@
-import type { Destination, OutboxEntry, Product, Shipment, SyncFields } from "../domain/types";
+import type { DocData } from "../documents/model";
+import type { Destination, DocumentRecord, OutboxEntry, Product, Shipment, SyncFields } from "../domain/types";
 import { db } from "./db";
 
 type Entity = SyncFields & { id: string };
@@ -42,3 +43,25 @@ export const getMeta = async <T>(key: string) => (await db.meta.get(key))?.value
 export const setMeta = async (key: string, value: unknown) => {
   await db.meta.put({ key, value });
 };
+
+export const listDocuments = async (shipmentId: string) =>
+  (await db.documents.where("shipmentId").equals(shipmentId).sortBy("generatedAt")).reverse();
+
+/** Mêmes données que la dernière version : on la réutilise. Sinon nouvelle version ; les anciennes ne sont jamais effacées. */
+export async function saveDocumentVersion(
+  shipmentId: string, containerId: string | null, format: DocumentRecord["format"], data: DocData,
+): Promise<DocumentRecord<DocData>> {
+  return db.transaction("rw", db.documents, db.outbox, async () => {
+    const same = (await db.documents.where("shipmentId").equals(shipmentId).toArray())
+      .filter((d) => d.containerId === containerId && d.format === format)
+      .sort((a, b) => b.version - a.version);
+    if (same[0] && JSON.stringify(same[0].data) === JSON.stringify(data)) return same[0];
+    const now = new Date().toISOString();
+    const record: DocumentRecord<DocData> = {
+      id: crypto.randomUUID(), shipmentId, containerId, format, version: (same[0]?.version ?? 0) + 1, data, generatedAt: now,
+    };
+    await db.documents.add(record);
+    await db.outbox.add({ id: crypto.randomUUID(), entityType: "document", entityId: record.id, op: "upsert", createdAt: now, attempts: 0 });
+    return record;
+  });
+}

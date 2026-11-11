@@ -12,7 +12,7 @@ export function StepReview({ shipment: s }: StepProps) {
   return (
     <>
       <h2>Vérification</h2>
-      <p className="muted">Relisez les totaux avant de terminer.</p>
+      <p className="muted">Relisez les totaux avant de créer le document.</p>
       {issues.length ? (
         <div className="alerts">
           {issues.map((i) => (

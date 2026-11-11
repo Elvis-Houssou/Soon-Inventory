@@ -10,11 +10,12 @@ import { newShipment } from "@/lib/domain/shipment";
 import type { Shipment } from "@/lib/domain/types";
 import { formatInt, formatKg, shipmentTotals } from "@/lib/domain/weights";
 import { StepContainers } from "./StepContainers";
+import { StepDocument } from "./StepDocument";
 import { StepGeneral } from "./StepGeneral";
 import { StepGoods } from "./StepGoods";
 import { StepReview } from "./StepReview";
 
-const STEPS = ["Destination et dates", "Conteneurs", "Marchandises", "Vérification"];
+const STEPS = ["Destination et dates", "Conteneurs", "Marchandises", "Vérification", "Document"];
 
 export type StepProps = { shipment: Shipment; update: (next: Shipment) => void };
 
@@ -84,6 +85,7 @@ export function Wizard() {
         {step === 2 && <StepContainers {...props} />}
         {step === 3 && <StepGoods {...props} current={active} setCurrent={setCurrent} />}
         {step === 4 && <StepReview {...props} />}
+        {step === 5 && <StepDocument {...props} />}
       </section>
 
       <div className="bar">

@@ -75,3 +75,15 @@ export interface OutboxEntry {
   attempts: number;
   lastError?: string;
 }
+
+/** Une version d'un document généré. `data` est figé : le fichier se régénère à l'identique. */
+export interface DocumentRecord<D = unknown> {
+  id: string;
+  shipmentId: string;
+  /** null = document global. */
+  containerId: string | null;
+  format: "pdf" | "xlsx";
+  version: number;
+  data: D;
+  generatedAt: string;
+}
