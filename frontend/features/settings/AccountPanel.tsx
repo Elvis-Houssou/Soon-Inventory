@@ -4,11 +4,13 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { Check, LogOut, RefreshCw, TriangleAlert } from "lucide-react";
 import { useState } from "react";
 import { db } from "@/lib/db/db";
+import { retryRefused } from "@/lib/sync/engine";
 import { login, logout, register, syncNow, useSync } from "@/lib/sync/manager";
 
 export function AccountPanel() {
   const { account, status, lastSyncAt } = useSync();
   const pending = useLiveQuery(() => db.outbox.count(), []) ?? 0;
+  const refused = useLiveQuery(() => db.outbox.filter((e) => !!e.lastError).toArray(), []) ?? [];
   const [mode, setMode] = useState<"login" | "register">("login");
   const [form, setForm] = useState({ email: "", password: "", company: "" });
   const [error, setError] = useState("");
@@ -46,6 +48,20 @@ export function AccountPanel() {
             </span>
           </p>
         </div>
+        {refused.length > 0 && (
+          <div className="warn" role="alert" style={{ margin: "0 0 14px" }}>
+            <TriangleAlert className="i" aria-hidden />
+            <div>
+              <p>Le serveur a refusé {refused.length > 1 ? `${refused.length} envois` : "un envoi"} :</p>
+              {[...new Set(refused.map((e) => e.lastError))].map((msg) => (
+                <p key={msg}>{msg}</p>
+              ))}
+              <button type="button" className="btn ghost" style={{ marginTop: 10 }} onClick={() => void retryRefused().then(syncNow)}>
+                Réessayer
+              </button>
+            </div>
+          </div>
+        )}
         <div className="addrow">
           <button type="button" className="btn dark" disabled={status === "syncing"} onClick={() => void syncNow()}>
             <RefreshCw className="i" aria-hidden /> {status === "syncing" ? "Envoi en cours…" : "Envoyer maintenant"}

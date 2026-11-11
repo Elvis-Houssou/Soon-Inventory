@@ -1,3 +1,5 @@
+import time
+
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import select
@@ -22,6 +24,19 @@ class LoginIn(BaseModel):
     password: str
 
 
+# shortcut: compteur en mémoire, suffisant pour un seul serveur ; à déplacer en base si le service tourne en plusieurs exemplaires.
+MAX_FAILURES, WINDOW_SECONDS = 5, 15 * 60
+failures: dict[str, list[float]] = {}
+
+
+def _too_many_failures(email: str) -> bool:
+    if len(failures) > 10_000:
+        failures.clear()
+    recent = [t for t in failures.get(email, []) if time.monotonic() - t < WINDOW_SECONDS]
+    failures[email] = recent
+    return len(recent) >= MAX_FAILURES
+
+
 def _me(db: Session, user: User) -> dict:
     company = db.get(Company, user.company_id)
     return {"id": str(user.id), "email": user.email, "companyId": str(user.company_id), "companyName": company.name if company else ""}
@@ -44,10 +59,15 @@ def register(body: RegisterIn, response: Response, db: Session = Depends(get_ses
 
 @router.post("/auth/login")
 def login(body: LoginIn, response: Response, db: Session = Depends(get_session)):
-    user = db.scalar(select(User).where(User.email == body.email.lower()))
+    email = body.email.lower()
+    if _too_many_failures(email):
+        raise HTTPException(429, "Trop d'essais. Réessayez dans 15 minutes.")
+    user = db.scalar(select(User).where(User.email == email))
     # Même message dans les deux cas : on ne révèle pas si l'adresse existe.
     if user is None or user.status != "active" or not verify_password(user.password_hash, body.password):
+        failures[email].append(time.monotonic())
         raise HTTPException(401, "Adresse e-mail ou mot de passe incorrect.")
+    failures.pop(email, None)
     set_session_cookie(response, user.id)
     return _me(db, user)
 

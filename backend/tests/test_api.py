@@ -149,3 +149,15 @@ def test_document(make_client):
     assert push(c, op("document", doc_id, doc))[0]["status"] == "accepted"  # renvoyé deux fois, une seule ligne
     docs = [x for x in c.get(f"{API}/sync/pull").json()["changes"] if x["entityType"] == "document"]
     assert len(docs) == 1 and docs[0]["data"]["data"] == {"sheets": []}
+
+
+def test_limite_des_essais_de_connexion(make_client):
+    make_client("a@example.com")
+    make_client("b@example.com")
+    c = make_client()
+    wrong = {"email": "a@example.com", "password": "mauvais-mot"}
+    assert [c.post(f"{API}/auth/login", json=wrong).status_code for _ in range(5)] == [401] * 5
+    # Au sixième essai, même le bon mot de passe est refusé : la porte reste fermée 15 minutes.
+    assert c.post(f"{API}/auth/login", json={"email": "a@example.com", "password": "motdepasse1"}).status_code == 429
+    # Les autres comptes ne sont pas touchés.
+    assert c.post(f"{API}/auth/login", json={"email": "b@example.com", "password": "motdepasse1"}).status_code == 200

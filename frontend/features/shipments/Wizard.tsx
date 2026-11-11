@@ -99,6 +99,8 @@ export function Wizard() {
 
   const go = (n: number) => {
     setDirection(n >= step ? 1 : -1);
+    // L'adresse perd son marqueur « nouveau » : la fiche doit exister avant, même si rien n'a été saisi.
+    if (params.has("nouveau")) update(shipment);
     router.replace(`/expedition?id=${shipment.id}&etape=${n}`);
   };
   const totals = shipmentTotals(shipment);

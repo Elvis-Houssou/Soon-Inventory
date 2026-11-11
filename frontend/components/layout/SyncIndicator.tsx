@@ -12,9 +12,12 @@ export function SyncIndicator() {
   const pending = useLiveQuery(() => db.outbox.count(), []) ?? 0;
   const conflicts = useLiveQuery(() => db.shipments.filter((s) => s.syncState === "conflict").count(), []) ?? 0;
 
+  const refused = useLiveQuery(() => db.outbox.filter((e) => !!e.lastError).count(), []) ?? 0;
+
   let tone = "";
   let text = "Enregistré sur cet appareil";
   if (conflicts) [tone, text] = ["off", `${conflicts} fiche${conflicts > 1 ? "s" : ""} à vérifier`];
+  else if (account && refused) [tone, text] = ["off", `${refused} envoi${refused > 1 ? "s" : ""} refusé${refused > 1 ? "s" : ""}`];
   else if (!online) [tone, text] = ["off", "Hors ligne · enregistré sur cet appareil"];
   else if (account && status === "syncing") text = "Envoi en cours…";
   else if (account && status === "error") [tone, text] = ["off", "Envoi impossible pour l'instant"];

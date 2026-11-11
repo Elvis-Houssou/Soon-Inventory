@@ -185,3 +185,10 @@ export async function takeServer(shipmentId: string): Promise<void> {
   });
   notifyRemoteChange(shipmentId);
 }
+
+/** Les envois refusés par le serveur ne repartent pas seuls : ici on les remet dans la file. */
+export async function retryRefused(): Promise<void> {
+  await db.outbox.toCollection().modify((e) => {
+    delete e.lastError;
+  });
+}

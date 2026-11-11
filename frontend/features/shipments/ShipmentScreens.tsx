@@ -1,11 +1,11 @@
 "use client";
 
 import { useLiveQuery } from "dexie-react-hooks";
-import { ArrowRight, Check, Copy, Package, Pencil, Search } from "lucide-react";
+import { ArrowRight, Check, Copy, Package, Pencil, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { listDestinations, listShipments, saveShipment } from "@/lib/db/repo";
+import { deleteShipment, listDestinations, listShipments, saveShipment } from "@/lib/db/repo";
 import { duplicateShipment } from "@/lib/domain/shipment";
 import type { Shipment } from "@/lib/domain/types";
 import { formatInt, formatKg, shipmentTotals } from "@/lib/domain/weights";
@@ -62,6 +62,15 @@ function Rows({ items, destName, resume }: { items: Shipment[]; destName: (s: Sh
               </Link>
               <button type="button" className="icon-btn" aria-label={`Reprendre ${label}`} title="Reprendre" onClick={() => resume(s)}>
                 <Copy className="i" aria-hidden />
+              </button>
+              <button
+                type="button"
+                className="icon-btn del"
+                aria-label={`Supprimer ${label}`}
+                title="Supprimer"
+                onClick={() => confirm(`Supprimer « ${label} » ? Elle disparaîtra aussi de vos autres appareils.`) && void deleteShipment(s.id)}
+              >
+                <Trash2 className="i" aria-hidden />
               </button>
             </span>
           </div>

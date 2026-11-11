@@ -67,6 +67,13 @@ test("PDF : un vrai fichier, paginé", () => {
   expect(buildPdf(buildDocument(addContainer(s), "UK")).getNumberOfPages()).toBe(3);
 });
 
+test("expédition encore vide : les fichiers se créent quand même", async () => {
+  const empty = buildDocument(newShipment(), "");
+  expect(empty.sheets[0]).toMatchObject({ destination: "—", depotDate: "—", containerNumber: "—", rows: [], totalCartons: 0 });
+  expect(buildPdf(empty).getNumberOfPages()).toBe(2);
+  expect((await buildWorkbook(empty).xlsx.writeBuffer()).byteLength).toBeGreaterThan(1000);
+});
+
 test("Excel : totaux numériques et colonnes lisibles", async () => {
   const s = reference();
   const buffer = await buildWorkbook(buildDocument(s, "UK")).xlsx.writeBuffer();

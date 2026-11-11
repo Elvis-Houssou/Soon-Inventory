@@ -10,6 +10,7 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.api.v1 import routes
 from app.core.db import get_session
 from app.main import app
 from app.models import Base
@@ -27,6 +28,7 @@ def make_client():
             yield s
 
     app.dependency_overrides[get_session] = session
+    routes.failures.clear()
 
     def new_client(email: str | None = None) -> TestClient:
         """Chaque client a ses propres cookies : un client = un appareil connecté."""

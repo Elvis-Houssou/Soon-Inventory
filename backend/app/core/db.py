@@ -13,7 +13,8 @@ def get_engine():
     if _engine is None:
         url = get_settings().sqlalchemy_url
         # prepare_threshold=None : la connexion « pooled » de Neon (PgBouncer) ne supporte pas les requêtes préparées.
-        args = {"prepare_threshold": None} if url.startswith("postgresql") else {}
+        # SQLite ne sert qu'aux essais locaux ; le serveur traite chaque requête dans un fil différent.
+        args = {"prepare_threshold": None} if url.startswith("postgresql") else {"check_same_thread": False}
         _engine = create_engine(url, pool_pre_ping=True, connect_args=args)
     return _engine
 
